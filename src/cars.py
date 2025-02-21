@@ -33,9 +33,8 @@ class Car:
     def extract_car_type_num(self):
         return self.car_type[:2]
 
-    def calculate_gamma(self):
-        gamma = 1 / ((1 + self.delta) ** (self.effect_year - 1))
-        return gamma
+    def gamma(self, t):
+        return 1 / ((1 + self.delta) ** (t - 1))
 
     def cols_from_attrs(self):
         return [attr for attr in self.__dict__.keys()][2:]
@@ -45,13 +44,27 @@ class Car:
         filtered_table = self.smgr_select_type(table)
         return filtered_table[cols].mean().round(2)
 
+    @staticmethod
+    def N_K(table1, table2):
+        return (table1 > table2).values.sum()
+
+    @staticmethod
+    def inside_sum_sign(gamma, val1, val2):
+        return round(gamma * val1 / val2, 2)
+
+    @staticmethod
+    def is_time_bound(attr_name: str):
+        return True if 'life' or 'period' in attr_name else False
+
     def compare_features(self, table: pd.DataFrame):
         entered_table_feats = pd.DataFrame(self.__dict__, index=[0]).iloc[:, 3:]
         total_feats = entered_table_feats.shape[1]
         if total_feats == table.shape[1]:
-            increased_feats = (entered_table_feats > table).values.sum()
-            decreased_feats = total_feats - increased_feats
-            #TODO
+            N = self.N_K(entered_table_feats, table)
+            K = self.N_K(table, entered_table_feats)
+        else:
+            print("ERROR")
+
     def smgr_select_type(
             self,
             table,
@@ -153,14 +166,16 @@ class Isothermic(Car):
         )
         self.heat_transfer_coeff = heat_transfer_coeff
 
-#
+
 car = Car(1,2,3,4,5,6,7,8,9,10)
 car2 = Car(3,1,4,5,2,6,7,8,9,10)
 
-print(
-    (pd.DataFrame(car.__dict__, index=[0]).iloc[:,3:] >
-    pd.DataFrame(car2.__dict__, index=[0]).iloc[:,3:]).values.sum()
-)
+car_df = pd.DataFrame(car.__dict__, index=[0]).iloc[:, 3:]
+
+difference = pd.DataFrame(car.__dict__, index=[0]).iloc[:, 3:] > \
+             pd.DataFrame(car2.__dict__, index=[0]).iloc[:, 3:]
+
+print(car_df[~difference])
 # for attr in car.__dict__:
 #     print(attr, car.__dict__[attr])
 
