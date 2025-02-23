@@ -1,4 +1,5 @@
 import pandas as pd
+from typing import Tuple, Dict
 from datetime import datetime, timedelta
 from car_info import CARS_CODE, CARS_FEAT
 import os
@@ -15,7 +16,7 @@ class Car:
                  major_repair_period,
                  axial_load,
                  body_volume,
-                 delta,
+                 delta=0.1,
                  effect_year=5):
 
         self.delta = delta
@@ -37,16 +38,31 @@ class Car:
         return 1 / ((1 + self.delta) ** (t - 1))
 
     def cols_from_attrs(self):
-        return [attr for attr in self.__dict__.keys()][2:]
+        return [attr for attr in self.__dict__.keys()][3:]
 
     def calculate_mean_vals(self, table):
         cols = self.cols_from_attrs()
-        filtered_table = self.smgr_select_type(table)
+        translated_dict_of_cols = {CARS_FEAT[col]: col for col in cols}
+        filtered_table = self.smgr_select_type(table)[translated_dict_of_cols.keys()]
+        filtered_table.rename(columns=translated_dict_of_cols, inplace=True)
         return filtered_table[cols].mean().round(2)
 
     @staticmethod
-    def N_K(table1, table2):
-        return (table1 > table2).values.sum()
+    def N_K(table1, table2, coeff="N"):
+        if coeff == "N":
+            table_comparison = table1 > table2
+        elif coeff == "K":
+            table_comparison = table1 < table2
+        n_k = table_comparison.values.sum()
+        table_comparison = table_comparison.iloc[0, :]
+        try:
+            table1 = table1.iloc[0, :]
+        except pd.errors.IndexingError:
+            pass
+        if n_k == 0:
+            n_k = 1
+        masked_table1 = table1[~table_comparison].to_dict()
+        return n_k, masked_table1
 
     @staticmethod
     def inside_sum_sign(gamma, val1, val2):
@@ -56,12 +72,58 @@ class Car:
     def is_time_bound(attr_name: str):
         return True if 'life' or 'period' in attr_name else False
 
-    def compare_features(self, table: pd.DataFrame):
-        entered_table_feats = pd.DataFrame(self.__dict__, index=[0]).iloc[:, 3:]
+    def get_gammas_sum(self, values: Dict, valid=False):
+        gammas = []
+        for k, v in values.items():
+            if self.is_time_bound(k):
+                gammas.append(self.gamma(v))
+            else:
+                gammas.append(1)
+        return sum(gammas)
+
+    def equation_member(self, values, smgr_dict, coeff):
+        sum_member = []
+        for k, v in values.items():
+            gamma = self.gamma(v) if self.is_time_bound(k) else 1
+            sum_member.append(
+                self.inside_sum_sign(gamma, v, smgr_dict[k])
+            )
+        return round(sum(sum_member) / coeff, 2)
+
+    def p_inn_valid(self, table):
+        _, _, N, K = self.compare_features(table)
+        entered_table_feats = self.df_from_attrs()
+        _, greater_values = self.N_K(table, entered_table_feats, coeff="N")
+        _, smaller_values = self.N_K(table, entered_table_feats, coeff="K")
+        greater_gammas = self.get_gammas_sum(greater_values)
+        smaller_gammas = self.get_gammas_sum(smaller_values)
+        p_inn_valid = round(greater_gammas / N + smaller_gammas / K, 2)
+        print(f"p_inn_valid: {p_inn_valid}")
+        return p_inn_valid
+
+    def p_inn(self, table):
+        greater_values, smaller_values, N, K = self.compare_features(table)
+        smgr_dict = table.to_dict()
+        N_member = self.equation_member(greater_values, smgr_dict, N)
+        K_member = self.equation_member(smaller_values, smgr_dict, K)
+        p_inn = N_member + K_member
+        print(f"p_inn: {p_inn}")
+        return p_inn
+
+    def is_innovative(self, table):
+        return self.p_inn(table) / self.p_inn_valid(table)
+
+
+    def df_from_attrs(self):
+        return pd.DataFrame(self.__dict__, index=[0]).iloc[:, 3:]
+
+    def compare_features(self, table: pd.DataFrame) -> Tuple[Dict, Dict, int, int]:
+        entered_table_feats = self.df_from_attrs()
         total_feats = entered_table_feats.shape[1]
-        if total_feats == table.shape[1]:
-            N = self.N_K(entered_table_feats, table)
-            K = self.N_K(table, entered_table_feats)
+        if total_feats == len(table):
+            N, greater_values = self.N_K(entered_table_feats, table, coeff="N")
+            K, smaller_values = self.N_K(entered_table_feats, table, coeff="K")
+            return greater_values, smaller_values, N, K
         else:
             print("ERROR")
 
@@ -167,15 +229,18 @@ class Isothermic(Car):
         self.heat_transfer_coeff = heat_transfer_coeff
 
 
-car = Car(1,2,3,4,5,6,7,8,9,10)
-car2 = Car(3,1,4,5,2,6,7,8,9,10)
+smgr = pd.read_excel("СМГР1.xlsx")
+car = Car("19-1273",
+          77,
+          23,
+          26,
+          2,
+          13,
+          25,
+          107,
+          0.1,
+          5)
 
-car_df = pd.DataFrame(car.__dict__, index=[0]).iloc[:, 3:]
-
-difference = pd.DataFrame(car.__dict__, index=[0]).iloc[:, 3:] > \
-             pd.DataFrame(car2.__dict__, index=[0]).iloc[:, 3:]
-
-print(car_df[~difference])
-# for attr in car.__dict__:
-#     print(attr, car.__dict__[attr])
+smgr_df = car.calculate_mean_vals(smgr)
+print(car.is_innovative(smgr_df))
 
