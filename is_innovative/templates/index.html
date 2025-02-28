@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %} {{ header }} {% endblock title %}
+{% block header %} {{ header }} {% endblock header %}
+{% block content %}
+    <form method="post" action="postuser/">
+        {% csrf_token %}
+        <p>Тип вагона:<br> <input name="car_type"/></p>
+        <p>Нагрузка на ось, т: <br> <input name="carrying_capacity" type="number"  min="0" max="100" step="0.01"/></p>
+        <input type="submit" value="Подтвердить"/>
+    </form>
+{% endblock content %}
