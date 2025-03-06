@@ -1,14 +1,58 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from .forms import UserForm
+from .forms import CarTypeForm, CarForm, PlatformForm, TankForm, MotherForm
+from src.car_info import CARS_CODE
 
 
 def index(request, header):
-    return render(request, "index.html")
+    return render(
+        request,
+        template_name="index.html",
+        context={"href": "car-type/"}
+    )
 
 
 def about(request, header):
     return render(request, "about.html")
+
+
+def select_car_type(request):
+    if request.method == "POST":
+        car_type = request.POST.get("car_type")
+        if car_type in ("13", "43"):
+            form = PlatformForm()
+        elif car_type in ("15", "45"):
+            form = TankForm()
+        else:
+            form = CarForm()
+
+        form.initial = {"car_type": car_type}
+
+        return render(
+            request,
+            template_name="values.html",
+            context={
+                "form": form,
+                "header": f"Введите характеристики для {CARS_CODE[int(car_type)]}",
+                "title": "Расчет инновационности вагона",
+                "href": "values/",
+            },
+
+        )
+
+    else:
+        form = CarTypeForm()
+        return render(
+            request=request,
+            template_name="values.html",
+            context={
+                "form": form,
+                "header": f"Введите модель вагона",
+                "title": "Определение модели вагона",
+                "href": "car-type/"
+            }
+        )
+
 
 
 def postuser(request):
