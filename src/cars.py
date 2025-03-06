@@ -147,6 +147,7 @@ class Car:
         ]
         return filtered_table
 
+
 class Platform(Car):
 
     def __init__(self, car_type,
