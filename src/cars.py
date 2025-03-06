@@ -113,7 +113,6 @@ class Car:
     def is_innovative(self, table):
         return self.p_inn(table) / self.p_inn_valid(table)
 
-
     def df_from_attrs(self):
         return pd.DataFrame(self.__dict__, index=[0]).iloc[:, 3:]
 
