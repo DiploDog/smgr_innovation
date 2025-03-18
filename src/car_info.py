@@ -35,5 +35,8 @@ CARS_FEAT = {
     'tank_volume': 'Объем, площадь',
     'car_service_life': 'Срок службы',
     'depot_repair_period': 'ДР после постройки',
-    'major_repair_period': 'КР после постройки'
+    'major_repair_period': 'КР после постройки',
+    'mean_heat_transfer_coeff': 'Коэффициент теплопередачи кузова',
+    'heat_transfer_coeff': 'Коэффициент теплопередачи кузова'
+
 }

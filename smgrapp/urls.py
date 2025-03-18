@@ -5,9 +5,9 @@ from is_innovative import views
 
 urlpatterns = [
     path("", views.index, {"header": "Проверка инновационности вагона"}),
-    path("car-type/", views.select_car_type),
-    path("values/", views.calculation),
-    path("postuser/", views.postuser),
+    path("car-type/", views.select_car_type, name="car-type"),
+    path("values/", views.values, name="values"),
+    path("result/", views.result, name="result"),
     path("about/",
          TemplateView.as_view(template_name="about.html"),
          {"header": "О приложении"},

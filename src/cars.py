@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import Tuple, Dict
 from datetime import datetime, timedelta
-from car_info import CARS_CODE, CARS_FEAT
+from .car_info import CARS_CODE, CARS_FEAT
 import os
 
 
@@ -16,11 +16,9 @@ class Car:
                  major_repair_period,
                  axial_load,
                  body_volume,
-                 delta=0.1,
-                 effect_year=5):
+                 delta=0.1):
 
         self.delta = delta
-        self.effect_year = effect_year
 
         self.car_type = car_type
         self.carrying_capacity = carrying_capacity
@@ -129,21 +127,14 @@ class Car:
     def smgr_select_type(
             self,
             table,
-            col_type="Шифр модели",
-            col_year="Год выпуска"
+            col_type="Шифр модели"
     ):
-        begin_year = int(
-            (
-                datetime.today() - timedelta(
-                    self.effect_year * 365
-                         )
-            ).year
-        )
         car_type_extracted = self.extract_car_type_num()
         filtered_table = table[
             (table[col_type].str.startswith(
-                car_type_extracted)) &
-            (table[col_year] >= begin_year)
+                car_type_extracted
+                )
+            )
         ]
         return filtered_table
 
@@ -158,8 +149,7 @@ class Platform(Car):
                  major_repair_period,
                  axial_load,
                  floor_area,
-                 delta,
-                 effect_year,
+                 delta
                  ):
         super().__init__(
             car_type,
@@ -169,8 +159,7 @@ class Platform(Car):
             depot_repair_period,
             major_repair_period,
             axial_load,
-            delta,
-            effect_year
+            delta
         )
         self.floor_area = floor_area
 
@@ -184,8 +173,7 @@ class Tank(Car):
                  major_repair_period,
                  axial_load,
                  tank_volume,
-                 delta,
-                 effect_year,
+                 delta
                  ):
         super().__init__(
             car_type,
@@ -195,8 +183,7 @@ class Tank(Car):
             depot_repair_period,
             major_repair_period,
             axial_load,
-            delta,
-            effect_year
+            delta
         )
         self.tank_volume = tank_volume
 
@@ -211,8 +198,8 @@ class Isothermic(Car):
                  axial_load,
                  body_volume,
                  delta,
-                 effect_year,
-                 heat_transfer_coeff
+                 heat_transfer_coeff,
+                 mean_heat_transfer_coeff
                  ):
         super().__init__(
             car_type,
@@ -223,24 +210,41 @@ class Isothermic(Car):
             major_repair_period,
             body_volume,
             axial_load,
-            delta,
-            effect_year
+            delta
         )
         self.heat_transfer_coeff = heat_transfer_coeff
+        self.mean_heat_transfer_coeff = mean_heat_transfer_coeff
 
+    def cols_from_attrs(self):
+        return [attr for attr in self.__dict__.keys() if attr != self.mean_heat_transfer_coeff][3:]
 
-smgr = pd.read_excel("СМГР1.xlsx")
-car = Car("19-1273",
-          77,
-          23,
-          26,
-          2,
-          13,
-          25,
-          107,
-          0.1,
-          5)
+    def smgr_select_type(
+            self,
+            table,
+            col_type="Шифр модели"
+    ):
+        car_type_extracted = self.extract_car_type_num()
+        filtered_table = table[
+            (table[col_type].str.startswith(
+                car_type_extracted
+                )
+            )
+        ]
+        return filtered_table
 
-smgr_df = car.calculate_mean_vals(smgr)
-print(car.is_innovative(smgr_df))
+    def calculate_mean_vals(self, table):
+        cols = self.cols_from_attrs()
+        translated_dict_of_cols = {CARS_FEAT[col]: col for col in cols if 'heat' not in col}
+        print(translated_dict_of_cols)
+        filtered_table = self.smgr_select_type(table)[translated_dict_of_cols.keys()]
+        filtered_table.rename(columns=translated_dict_of_cols, inplace=True)
+        filtered_table = filtered_table[cols[:-2]].mean().round(2)
+        filtered_table["Коэффициент теплопередачи кузова"] = self.mean_heat_transfer_coeff
+        return filtered_table
+
+    @staticmethod
+    def ht_coeff_exists():
+        with
+
+smgr = pd.read_excel("src/СМГР1.xlsx")
 

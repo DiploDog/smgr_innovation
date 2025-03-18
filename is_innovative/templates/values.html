@@ -7,6 +7,11 @@
     <form method="POST">
         {% csrf_token %}
         {{ form.as_table}}
-        <button type="submit" class="btn btn-primary btn-lg w-10">Подтвердить</button>
+        <div class="text-center">
+            <button id="button" type="submit" class="btn btn-primary btn-lg w-10">
+                Подтвердить
+            </button>
+        </div>
+
     </form>
 {% endblock content %}
