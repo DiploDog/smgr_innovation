@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %} {{ header }} {% endblock title %}
+{% block header %} {{ header }} {% endblock header %}
+{% block content %}
+
+    <div class="text-center">
+        <p>
+            <i>Показатель инновационности</i> Вашего вагона типа <b>{{ car_type }}</b> составил <b>{{ result }}</b>
+        </p>
+        <p>
+        При условии, что <i>критерий инновационности</i> равен <b>1.05</b>, вагон следует признать <i><b>{{ class_ }}</b></i>
+        </p>
+    </div>
+    <div class="text-center">
+        <a class="btn btn-primary w-40" href="{{ href }}">Новый расчет</a>
+    </div>
+
+
+{% endblock content %}

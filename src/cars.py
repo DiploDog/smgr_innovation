@@ -11,14 +11,17 @@ class Car:
                  car_type,
                  carrying_capacity,
                  tare_weight,
+                 release,
                  car_service_life,
                  depot_repair_period,
                  major_repair_period,
                  axial_load,
                  body_volume,
+                 linear_load,
                  delta=0.1):
 
         self.delta = delta
+        self.release = release
 
         self.car_type = car_type
         self.carrying_capacity = carrying_capacity
@@ -28,6 +31,7 @@ class Car:
         self.major_repair_period = major_repair_period
         self.axial_load = axial_load
         self.body_volume = body_volume
+        self.linear_load = linear_load
 
     def extract_car_type_num(self):
         return self.car_type[:2]
@@ -68,7 +72,7 @@ class Car:
 
     @staticmethod
     def is_time_bound(attr_name: str):
-        return True if 'life' or 'period' in attr_name else False
+        return True if ('life' or 'period') in attr_name else False
 
     def get_gammas_sum(self, values: Dict, valid=False):
         gammas = []
@@ -83,6 +87,7 @@ class Car:
         sum_member = []
         for k, v in values.items():
             gamma = self.gamma(v) if self.is_time_bound(k) else 1
+            print(k, v, gamma)
             sum_member.append(
                 self.inside_sum_sign(gamma, v, smgr_dict[k])
             )
@@ -131,120 +136,51 @@ class Car:
     ):
         car_type_extracted = self.extract_car_type_num()
         filtered_table = table[
-            (table[col_type].str.startswith(
-                car_type_extracted
+                (
+                    table[col_type].str.startswith(
+                        car_type_extracted
+                    )
+                ) &
+                (
+                    table["Год выпуска"].between(
+                        self.release - 5, self.release
+                    )
                 )
-            )
-        ]
+            ]
+        filtered_table.to_excel("src/Выбранные_вагоны.xlsx")
         return filtered_table
 
 
 class Platform(Car):
 
-    def __init__(self, car_type,
-                 carrying_capacity,
-                 tare_weight,
-                 car_service_life,
-                 depot_repair_period,
-                 major_repair_period,
-                 axial_load,
-                 floor_area,
-                 delta
-                 ):
-        super().__init__(
-            car_type,
-            carrying_capacity,
-            tare_weight,
-            car_service_life,
-            depot_repair_period,
-            major_repair_period,
-            axial_load,
-            delta
-        )
+    def __init__(self, floor_area, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.floor_area = floor_area
 
 
 class Tank(Car):
-    def __init__(self, car_type,
-                 carrying_capacity,
-                 tare_weight,
-                 car_service_life,
-                 depot_repair_period,
-                 major_repair_period,
-                 axial_load,
-                 tank_volume,
-                 delta
-                 ):
-        super().__init__(
-            car_type,
-            carrying_capacity,
-            tare_weight,
-            car_service_life,
-            depot_repair_period,
-            major_repair_period,
-            axial_load,
-            delta
-        )
+    def __init__(self, tank_volume, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.tank_volume = tank_volume
 
 
 class Isothermic(Car):
-    def __init__(self, car_type,
-                 carrying_capacity,
-                 tare_weight,
-                 car_service_life,
-                 depot_repair_period,
-                 major_repair_period,
-                 axial_load,
-                 body_volume,
-                 delta,
-                 heat_transfer_coeff,
-                 mean_heat_transfer_coeff
-                 ):
-        super().__init__(
-            car_type,
-            carrying_capacity,
-            tare_weight,
-            car_service_life,
-            depot_repair_period,
-            major_repair_period,
-            body_volume,
-            axial_load,
-            delta
-        )
+    def __init__(self, heat_transfer_coeff, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.heat_transfer_coeff = heat_transfer_coeff
-        self.mean_heat_transfer_coeff = mean_heat_transfer_coeff
 
-    def cols_from_attrs(self):
-        return [attr for attr in self.__dict__.keys() if attr != self.mean_heat_transfer_coeff][3:]
 
-    def smgr_select_type(
-            self,
-            table,
-            col_type="Шифр модели"
-    ):
-        car_type_extracted = self.extract_car_type_num()
-        filtered_table = table[
-            (table[col_type].str.startswith(
-                car_type_extracted
-                )
-            )
-        ]
-        return filtered_table
+def check_if_linearload():
+    df = pd.read_excel("src/СМГР1.xlsx")
+    if "Погонная нагрузка" not in df.columns:
+        df["Погонная нагрузка"] = (
+                (
+                    df["Грузоподъемность"] +
+                    df["Тара максимальная"]
+                ) / df["Длина"] * 1000
+        ).round(2)
+    return df
 
-    def calculate_mean_vals(self, table):
-        cols = self.cols_from_attrs()
-        translated_dict_of_cols = {CARS_FEAT[col]: col for col in cols if 'heat' not in col}
-        print(translated_dict_of_cols)
-        filtered_table = self.smgr_select_type(table)[translated_dict_of_cols.keys()]
-        filtered_table.rename(columns=translated_dict_of_cols, inplace=True)
-        filtered_table = filtered_table[cols[:-2]].mean().round(2)
-        filtered_table["Коэффициент теплопередачи кузова"] = self.mean_heat_transfer_coeff
-        return filtered_table
-
-    @staticmethod
-    def ht_coeff_exists():
-        with
-
-smgr = pd.read_excel("src/СМГР1.xlsx")
+smgr = check_if_linearload()
+print(list(smgr.columns))
 

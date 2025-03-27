@@ -1,5 +1,6 @@
 from django import forms
 from src.car_info import CARS_CODE
+import datetime
 
 
 class CarTypeForm(forms.Form):
@@ -11,14 +12,17 @@ class CarTypeForm(forms.Form):
 
 
 class MotherForm(forms.Form):
+
     delta = forms.FloatField(label="Коэфф. отдаления получения эффекта, Δ", initial=0.1, step_size=0.01)
     car_type = forms.CharField(label="Модель вагона")
+    release = forms.IntegerField(label="Год выпуска", step_size=1)
     carrying_capacity = forms.FloatField(label="Грузоподъемность, т", step_size=0.1)
     tare_weight = forms.FloatField(label="Масса тары, т", step_size=0.1)
     car_service_life = forms.IntegerField(label="Срок службы вагона, лет")
     depot_repair_period = forms.IntegerField(label="Срок деповского ремонта, лет")
     major_repair_period = forms.IntegerField(label="Срок капитального ремонта, лет")
     axial_load = forms.FloatField(label="Нагрузка на ось, тс", step_size=0.1)
+    linear_load = forms.FloatField(label="Погонная нагрузка, тс/м", step_size=0.01)
 
     def __init__(self, *args, **kwargs):
         super(MotherForm, self).__init__(*args, **kwargs)
@@ -59,7 +63,6 @@ class TankForm(MotherForm):
 
 class IsothermicForm(CarForm):
     heat_transfer_coeff = forms.FloatField(label="Коэффициент теплопередачи кузова", step_size=0.01)
-    mean_heat_transfer_coeff = forms.FloatField(label="Средний коэффициент теплопередачи кузова", step_size=0.01)
 
     def __init__(self, *args, **kwargs):
         super(IsothermicForm, self).__init__(*args, **kwargs)

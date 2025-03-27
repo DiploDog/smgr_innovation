@@ -29,6 +29,7 @@ CARS_FEAT = {
     'car_type': 'Шифр модели',
     'carrying_capacity': 'Грузоподъемность',
     'tare_weight': 'Тара максимальная',
+    'release': 'Год выпуска',
     'axial_load': 'Осевая нагрузка',
     'body_volume': 'Объем, площадь',
     'floor_area': 'Объем, площадь',
@@ -36,7 +37,6 @@ CARS_FEAT = {
     'car_service_life': 'Срок службы',
     'depot_repair_period': 'ДР после постройки',
     'major_repair_period': 'КР после постройки',
-    'mean_heat_transfer_coeff': 'Коэффициент теплопередачи кузова',
-    'heat_transfer_coeff': 'Коэффициент теплопередачи кузова'
-
+    'heat_transfer_coeff': 'Коэффициент теплопередачи кузова',
+    'linear_load': 'Погонная нагрузка'
 }
