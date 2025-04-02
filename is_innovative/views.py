@@ -8,10 +8,15 @@ from src.cars import Car, Platform, Tank, Isothermic, smgr
 
 
 def index(request, header):
+    title = "Определение показателя инновационности грузовых вагонов"
     return render(
         request,
         template_name="index.html",
-        context={"href": "car-type/"}
+        context={
+            "href": "car-type/",
+            "header": title,
+            "title": title
+        }
     )
 
 
@@ -84,11 +89,10 @@ def values(request):
 
             car = car(**cleaned_data)
             smgr_df = car.calculate_mean_vals(smgr)
-            print(smgr_df)
             result = car.is_innovative(smgr_df)
 
-            # Сохраняем результат в сессии
             request.session["calculation_result"] = result
+            request.session["real_car_type"] = car.get_car_type()
 
             # Перенаправляем на страницу результата
             return redirect("result")
@@ -120,7 +124,7 @@ def result(request):
         class_ = "не инновационным"
     else:
         class_ = "инновационным"
-    car_type = request.session.get("car_type")
+    car_type = request.session.get("real_car_type")
     return render(
         request,
         template_name="result.html",
