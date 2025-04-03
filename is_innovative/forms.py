@@ -23,7 +23,7 @@ class MotherForm(forms.Form):
     major_repair_period = forms.IntegerField(label="Срок капитального ремонта, лет")
     axial_load = forms.FloatField(label="Нагрузка на ось, тс", step_size=0.1)
     linear_load = forms.FloatField(label="Погонная нагрузка, тс/м", step_size=0.01)
-    innovation_lifespan = forms.IntegerField(label="Срок жизни инновации", step_size=1)
+    innovation_lifespan = forms.IntegerField(label="Срок жизни инновации, лет", step_size=1)
 
     def __init__(self, *args, **kwargs):
         super(MotherForm, self).__init__(*args, **kwargs)
